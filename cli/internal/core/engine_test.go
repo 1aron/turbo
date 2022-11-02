@@ -65,7 +65,7 @@ func TestEngineDefault(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	errs := p.Execute(testVisitor, EngineBuildingOptions{
+	errs := p.Execute(testVisitor, EngineExecutionOptions{
 		Concurrency: 10,
 	})
 
@@ -142,7 +142,7 @@ func TestDependenciesOnUnspecifiedPackages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to prepare engine: %v", err)
 	}
-	errs := p.Execute(testVisitor, EngineBuildingOptions{
+	errs := p.Execute(testVisitor, EngineExecutionOptions{
 		Concurrency: 10,
 	})
 	for _, err := range errs {
