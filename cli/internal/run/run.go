@@ -787,11 +787,14 @@ func (r *run) executeTasks(ctx gocontext.Context, g *completeGraph, rs *runSpec,
 		Parallel:    rs.Opts.runOpts.parallel,
 		Concurrency: rs.Opts.runOpts.concurrency,
 	}
-	visitor := g.getPackageTaskVisitor(ctx, func(ctx gocontext.Context, packageTask *nodes.PackageTask) error {
+
+	someFunc := func(ctx gocontext.Context, packageTask *nodes.PackageTask) error {
 		deps := engine.TaskGraph.DownEdges(packageTask.TaskID)
 		return ec.exec(ctx, packageTask, deps)
-	})
-	errs := engine.Execute(visitor, execOpts)
+	}
+
+	visitorFn := g.getPackageTaskVisitor(ctx, someFunc)
+	errs := engine.Execute(visitorFn, execOpts)
 
 	// Track if we saw any child with a non-zero exit code
 	exitCode := 0
@@ -1140,9 +1143,10 @@ func (ec *execContext) exec(ctx gocontext.Context, packageTask *nodes.PackageTas
 }
 
 func (g *completeGraph) getPackageTaskVisitor(ctx gocontext.Context, visitor func(ctx gocontext.Context, packageTask *nodes.PackageTask) error) func(taskID string) error {
-	return func(taskID string) error {
 
+	return func(taskID string) error {
 		name, task := util.GetPackageTaskFromId(taskID)
+
 		pkg, ok := g.PackageInfos[name]
 		if !ok {
 			return fmt.Errorf("cannot find package %v for task %v", name, taskID)
@@ -1150,6 +1154,7 @@ func (g *completeGraph) getPackageTaskVisitor(ctx gocontext.Context, visitor fun
 
 		// first check for package-tasks
 		taskDefinition, ok := g.Pipeline[fmt.Sprintf("%v", taskID)]
+
 		if !ok {
 			// then check for regular tasks
 			fallbackTaskDefinition, notcool := g.Pipeline[task]
@@ -1160,12 +1165,15 @@ func (g *completeGraph) getPackageTaskVisitor(ctx gocontext.Context, visitor fun
 			// override if we need to...
 			taskDefinition = fallbackTaskDefinition
 		}
-		return visitor(ctx, &nodes.PackageTask{
+
+		packageTask := &nodes.PackageTask{
 			TaskID:         taskID,
 			Task:           task,
 			PackageName:    name,
 			Pkg:            pkg,
 			TaskDefinition: &taskDefinition,
-		})
+		}
+
+		return visitor(ctx, packageTask)
 	}
 }
