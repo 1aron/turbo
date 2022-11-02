@@ -247,7 +247,7 @@ func (e *Engine) addTaskToGraph(taskID string, from string, pkgName string) (str
 
 	// If the fromTask is persistent, we need to throw, because tasks cannot depend on persistent tasks.
 	if fromTask != nil && fromTask.Persistent {
-		return "", fmt.Errorf("Persistent tasks cannot depend on other persistent tasks. Found %#v depends on %#v", taskID, fromTaskID)
+		return "", fmt.Errorf("WARN: Tasks cannot depend on persistent tasks. Found %#v depends on %#v", taskID, fromTaskID)
 	}
 
 	// Otherwise, add the relationship into the TaskGraph.

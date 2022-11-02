@@ -185,7 +185,7 @@ func TestPrepare_PersistentDependencies_Topological(t *testing.T) {
 		TasksOnly: false,
 	})
 
-	expected := "Persistent tasks cannot depend on other persistent tasks. Found \"workspace-c#dev\" depends on \"workspace-b#dev\""
+	expected := "Tasks cannot depend on persistent tasks. Found \"workspace-c#dev\" depends on \"workspace-b#dev\""
 	assertOther.EqualErrorf(t, err, expected, "")
 }
 
@@ -214,7 +214,7 @@ func TestPrepare_PersistentDependencies_SameWorkspace(t *testing.T) {
 		TasksOnly: false,
 	})
 
-	expected := "Persistent tasks cannot depend on other persistent tasks. Found \"workspace-a#build\" depends on \"workspace-a#something\""
+	expected := "Tasks cannot depend on persistent tasks. Found \"workspace-a#build\" depends on \"workspace-a#something\""
 	assertOther.EqualErrorf(t, err, expected, "")
 }
 
@@ -245,7 +245,7 @@ func TestPrepare_PersistentDependencies_WorkspaceSpecific(t *testing.T) {
 		TasksOnly: false,
 	})
 
-	expected := "Persistent tasks cannot depend on other persistent tasks. Found \"workspace-a#dev\" depends on \"workspace-b#something\""
+	expected := "Tasks cannot depend on persistent tasks. Found \"workspace-a#dev\" depends on \"workspace-b#something\""
 	assertOther.EqualErrorf(t, err, expected, "")
 }
 
@@ -282,7 +282,7 @@ func TestPrepare_PersistentDependencies_CrossWorkspace(t *testing.T) {
 		TasksOnly: false,
 	})
 
-	expected := "Persistent tasks cannot depend on other persistent tasks. Found \"workspace-a#dev\" depends on \"workspace-b#dev\""
+	expected := "Tasks cannot depend on persistent tasks. Found \"workspace-a#dev\" depends on \"workspace-b#dev\""
 	assertOther.EqualErrorf(t, err, expected, "")
 }
 
