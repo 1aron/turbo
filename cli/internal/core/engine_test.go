@@ -312,7 +312,7 @@ func TestRunPackageTask(t *testing.T) {
 		TaskNames: []string{"special"},
 	})
 	assert.NilError(t, err, "Prepare")
-	errs := p.Execute(testVisitor, EngineBuildingOptions{
+	errs := p.Execute(testVisitor, EngineExecutionOptions{
 		Concurrency: 10,
 	})
 	for _, err := range errs {
@@ -377,7 +377,7 @@ func TestIncludeRootTasks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to prepare engine: %v", err)
 	}
-	errs := p.Execute(testVisitor, EngineBuildingOptions{
+	errs := p.Execute(testVisitor, EngineExecutionOptions{
 		Concurrency: 10,
 	})
 	for _, err := range errs {
@@ -431,7 +431,7 @@ func TestDependOnRootTask(t *testing.T) {
 		TaskNames: []string{"build"},
 	})
 	assert.NilError(t, err, "Prepare")
-	errs := p.Execute(testVisitor, EngineBuildingOptions{
+	errs := p.Execute(testVisitor, EngineExecutionOptions{
 		Concurrency: 10,
 	})
 	for _, err := range errs {
@@ -552,7 +552,7 @@ func TestEngineTasksOnly(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	errs := p.Execute(testVisitor, EngineBuildingOptions{
+	errs := p.Execute(testVisitor, EngineExecutionOptions{
 		Concurrency: 10,
 	})
 
