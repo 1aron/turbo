@@ -86,10 +86,11 @@ type EngineExecutionOptions struct {
 func (e *Engine) Execute(visitorFn Visitor, opts EngineExecutionOptions) []error {
 	var sema = util.NewSemaphore(opts.Concurrency)
 	return e.TaskGraph.Walk(func(v dag.Vertex) error {
-		vertexName := dag.VertexName(v)
+		// Each vertex in the graoh is a taskID (package#task format)
+		taskID := dag.VertexName(v)
 
 		// Always return if it is the root node
-		if strings.Contains(vertexName, ROOT_NODE_NAME) {
+		if strings.Contains(taskID, ROOT_NODE_NAME) {
 			return nil
 		}
 
@@ -99,7 +100,7 @@ func (e *Engine) Execute(visitorFn Visitor, opts EngineExecutionOptions) []error
 			defer sema.Release()
 		}
 
-		return visitorFn(vertexName) // vertextName is a taskID
+		return visitorFn(taskID)
 	})
 }
 
