@@ -83,23 +83,27 @@ type EngineExecutionOptions struct {
 }
 
 // Execute executes the pipeline, constructing an internal task graph and walking it accordingly.
-func (e *Engine) Execute(visitor Visitor, opts EngineExecutionOptions) []error {
+func (e *Engine) Execute(visitorFn Visitor, opts EngineExecutionOptions) []error {
 	var sema = util.NewSemaphore(opts.Concurrency)
 	return e.TaskGraph.Walk(func(v dag.Vertex) error {
+		vertexName := dag.VertexName(v)
+
 		// Always return if it is the root node
-		if strings.Contains(dag.VertexName(v), ROOT_NODE_NAME) {
+		if strings.Contains(vertexName, ROOT_NODE_NAME) {
 			return nil
 		}
+
 		// Acquire the semaphore unless parallel
 		if !opts.Parallel {
 			sema.Acquire()
 			defer sema.Release()
 		}
-		return visitor(dag.VertexName(v))
+
+		return visitorFn(vertexName) // vertextName is a taskID
 	})
 }
 
-func (e *Engine) getTaskDefinition(pkg string, taskName string, taskID string) (*Task, error) {
+func (e *Engine) GetTaskDefinition(pkg string, taskName string, taskID string) (*Task, error) {
 	if task, ok := e.Tasks[taskID]; ok {
 		return task, nil
 	}
@@ -117,7 +121,7 @@ func (e *Engine) generateTaskGraph(pkgs []string, taskNames []string, tasksOnly 
 		for _, taskName := range taskNames {
 			if !isRootPkg || e.rootEnabledTasks.Includes(taskName) {
 				taskID := util.GetTaskId(pkg, taskName)
-				if _, err := e.getTaskDefinition(pkg, taskName, taskID); err != nil {
+				if _, err := e.GetTaskDefinition(pkg, taskName, taskID); err != nil {
 					// Initial, non-package tasks are not required to exist, as long as some
 					// package in the list packages defines it as a package-task. Dependencies
 					// *are* required to have a definition.
@@ -144,7 +148,7 @@ func (e *Engine) generateTaskGraph(pkgs []string, taskNames []string, tasksOnly 
 
 		// `task` could be a workspace-specific task definition or
 		// the generic task definition in turbo.json
-		task, err := e.getTaskDefinition(pkg, taskName, taskID)
+		task, err := e.GetTaskDefinition(pkg, taskName, taskID)
 
 		if err != nil {
 			return err
@@ -243,7 +247,7 @@ func (e *Engine) generateTaskGraph(pkgs []string, taskNames []string, tasksOnly 
 // addTaskToGraph adds an edge between two tasks, but validates the relationship is valid first.
 func (e *Engine) addTaskToGraph(taskID string, from string, pkgName string) (string, error) {
 	fromTaskID := util.GetTaskId(pkgName, from)
-	fromTask, _ := e.getTaskDefinition(pkgName, from, fromTaskID)
+	fromTask, _ := e.GetTaskDefinition(pkgName, from, fromTaskID)
 
 	// If the fromTask is persistent, we need to throw, because tasks cannot depend on persistent tasks.
 	if fromTask != nil && fromTask.Persistent {
