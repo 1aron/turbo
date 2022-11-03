@@ -872,14 +872,13 @@ func (r *run) executeTasks(ctx gocontext.Context, g *completeGraph, rs *runSpec,
 		Concurrency: rs.Opts.runOpts.concurrency,
 	}
 
-	someFunc := func(ctx gocontext.Context, packageTask *nodes.PackageTask) error {
+	execFunc := func(ctx gocontext.Context, packageTask *nodes.PackageTask) error {
 		deps := engine.TaskGraph.DownEdges(packageTask.TaskID)
-
 		// deps here are passed in to calculate the task hash
 		return ec.exec(ctx, packageTask, deps)
 	}
 
-	visitorFn := g.getPackageTaskVisitor(ctx, someFunc)
+	visitorFn := g.getPackageTaskVisitor(ctx, execFunc)
 	errs := engine.Execute(visitorFn, execOpts)
 
 	// Track if we saw any child with a non-zero exit code
