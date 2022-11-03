@@ -201,10 +201,10 @@ func (e *Engine) generateTaskGraph(pkgs []string, taskNames []string, tasksOnly 
 			for _, from := range task.TopoDeps.UnsafeListOfStrings() {
 				// add task dep from all the package deps within repo
 				for depPkg := range depPkgs {
-					fromTaskID, err := e.addTaskToGraph(toTaskID, from, depPkg.(string))
-					if err != nil {
-						return err
-					}
+					fromTaskID := util.GetTaskId(depPkg, from)
+					e.TaskGraph.Add(fromTaskID)
+					e.TaskGraph.Add(toTaskID)
+					e.TaskGraph.Connect(dag.BasicEdge(toTaskID, fromTaskID))
 					traversalQueue = append(traversalQueue, fromTaskID)
 				}
 			}
@@ -212,10 +212,10 @@ func (e *Engine) generateTaskGraph(pkgs []string, taskNames []string, tasksOnly 
 
 		if hasDeps {
 			for _, from := range task.Deps.UnsafeListOfStrings() {
-				fromTaskID, err := e.addTaskToGraph(toTaskID, from, pkg)
-				if err != nil {
-					return err
-				}
+				fromTaskID := util.GetTaskId(pkg, from)
+				e.TaskGraph.Add(fromTaskID)
+				e.TaskGraph.Add(toTaskID)
+				e.TaskGraph.Connect(dag.BasicEdge(toTaskID, fromTaskID))
 				traversalQueue = append(traversalQueue, fromTaskID)
 			}
 		}
@@ -223,11 +223,9 @@ func (e *Engine) generateTaskGraph(pkgs []string, taskNames []string, tasksOnly 
 		if hasPackageTaskDeps {
 			if pkgTaskDeps, ok := e.PackageTaskDeps[toTaskID]; ok {
 				for _, fromTaskID := range pkgTaskDeps {
-					fromTaskID, err := e.addTaskToGraph(toTaskID, fromTaskID, "")
-					if err != nil {
-						return err
-					}
-
+					e.TaskGraph.Add(fromTaskID)
+					e.TaskGraph.Add(toTaskID)
+					e.TaskGraph.Connect(dag.BasicEdge(toTaskID, fromTaskID))
 					traversalQueue = append(traversalQueue, fromTaskID)
 				}
 			}
@@ -242,25 +240,6 @@ func (e *Engine) generateTaskGraph(pkgs []string, taskNames []string, tasksOnly 
 	}
 
 	return nil
-}
-
-// addTaskToGraph adds an edge between two tasks, but validates the relationship is valid first.
-func (e *Engine) addTaskToGraph(taskID string, from string, pkgName string) (string, error) {
-	fromTaskID := util.GetTaskId(pkgName, from)
-	fromTask, _ := e.GetTaskDefinition(pkgName, from, fromTaskID)
-
-	// If the fromTask is persistent, we need to throw, because tasks cannot depend on persistent tasks.
-	if fromTask != nil && fromTask.Persistent {
-		return "", fmt.Errorf("Tasks cannot depend on persistent tasks. Found %#v depends on %#v", taskID, fromTaskID)
-	}
-
-	// Otherwise, add the relationship into the TaskGraph.
-	e.TaskGraph.Add(fromTaskID)
-	e.TaskGraph.Add(taskID)
-	e.TaskGraph.Connect(dag.BasicEdge(taskID, fromTaskID))
-
-	// Return the fromTaskID we looked up
-	return fromTaskID, nil
 }
 
 // AddTask adds a task to the Engine so it can be looked up later.
