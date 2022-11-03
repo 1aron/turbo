@@ -104,6 +104,7 @@ func (e *Engine) Execute(visitorFn Visitor, opts EngineExecutionOptions) []error
 	})
 }
 
+// GetTaskDefinition looks up a task in a package, or the fallback Task based on just the name.
 func (e *Engine) GetTaskDefinition(pkg string, taskName string, taskID string) (*Task, error) {
 	if task, ok := e.Tasks[taskID]; ok {
 		return task, nil
